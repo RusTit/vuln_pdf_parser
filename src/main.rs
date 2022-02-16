@@ -28,7 +28,7 @@ fn print_primitives(primitive: &Primitive) {
             }
         }
         _ => {
-            // println!("Type: {:?}", primitive);
+            println!("Type: {:?}", primitive);
             ()
         }
     }
@@ -38,21 +38,6 @@ fn main() -> Result<(), PdfError> {
     let now = SystemTime::now();
 
     let file = File::<Vec<u8>>::open("./VULN-20220209.12.pdf").unwrap();
-    if let Some(ref info) = file.trailer.info_dict {
-        for key in info.keys() {
-            println!("{:?}", info.get(key));
-        }
-        let title: Option<String> = info.get("Title").map(|p| p.try_into().unwrap());
-        let author: Option<String> = info.get("Author").map(|p| p.try_into().unwrap());
-
-        let descr = match (title, author) {
-            (Some(title), None) => title,
-            (None, Some(author)) => format!("[no title] – {}", author),
-            (Some(title), Some(author)) => format!("{} – {}", title, author),
-            _ => "PDF".into(),
-        };
-        println!("{}", descr);
-    }
 
     let p = file.num_pages();
     println!("Pages: {}", p);
@@ -68,7 +53,7 @@ fn main() -> Result<(), PdfError> {
                     // let operands: Vec<String> = (&oper.operands).into_iter().map(|p| p.try_into()).collect();
                     // println!("{:?} - {:?}", oper.operator.as_str(), operands)
                 }
-                v => {
+                _ => {
                     // println!("Operator: {}", v);
                     ()
                 }
