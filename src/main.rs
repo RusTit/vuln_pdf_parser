@@ -17,17 +17,20 @@ fn print_primitives(primitive: &Primitive) {
         }
         Primitive::String(v) => {
             // let v = v.into_string().unwrap();
-            let value = v.as_str();
-            match value {
-                Ok(v) => {
-                    println!("String: {}", v);
+            let value_result = v.as_str();
+            match value_result {
+                Ok(v_str) => {
+                    println!("String: '{}' / {:?}", v_str, v);
                 }
                 Err(e) => {
                     println!("Err: {:?} - {:?}", e, v)
                 }
             }
         }
-        _ => println!("Type: {:?}", primitive),
+        _ => {
+            // println!("Type: {:?}", primitive);
+            ()
+        }
     }
 }
 
@@ -36,6 +39,9 @@ fn main() -> Result<(), PdfError> {
 
     let file = File::<Vec<u8>>::open("./VULN-20220209.12.pdf").unwrap();
     if let Some(ref info) = file.trailer.info_dict {
+        for key in info.keys() {
+            println!("{:?}", info.get(key));
+        }
         let title: Option<String> = info.get("Title").map(|p| p.try_into().unwrap());
         let author: Option<String> = info.get("Author").map(|p| p.try_into().unwrap());
 
@@ -48,6 +54,8 @@ fn main() -> Result<(), PdfError> {
         println!("{}", descr);
     }
 
+    let p = file.num_pages();
+    println!("Pages: {}", p);
     let first_page = file.get_page(0).unwrap();
 
     if let Some(content) = &first_page.contents {
@@ -61,7 +69,8 @@ fn main() -> Result<(), PdfError> {
                     // println!("{:?} - {:?}", oper.operator.as_str(), operands)
                 }
                 v => {
-                    println!("Operator: {}", v)
+                    // println!("Operator: {}", v);
+                    ()
                 }
             }
         }
