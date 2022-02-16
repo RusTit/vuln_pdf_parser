@@ -1,0 +1,36 @@
+name: Build Rust project
+on:
+  push:
+    branches:    
+      - main
+      - master
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        # architecture: [x86, x64]
+        rust: [stable]
+    name: Build
+    steps:
+    - uses: actions/checkout@master
+    - uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: ${{ matrix.rust }}
+    - uses: actions/cache@v2
+      with:
+        path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: Build release artifact
+      run: cargo build --release
+    - uses: actions/upload-artifact@v2
+      with:
+          name: vuln_pdf_parser-${{ matrix.os }}
+          # name: vuln_pdf_parser-${{ matrix.os }}-${{ matrix.architecture }}
+          path: |
+            target/release/vuln_pdf_parser
+            target/release/vuln_pdf_parser.exe

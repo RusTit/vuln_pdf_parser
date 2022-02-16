@@ -29,8 +29,6 @@ fn main() -> Result<(), PdfError> {
 
     for page in file.pages() {
         let page = page.unwrap();
-        let contents = page.contents;
-
         let resources = page.resources().unwrap();
         for (i, &font) in resources.fonts.values().enumerate() {
             let font = file.get(font)?;
