@@ -6,7 +6,6 @@ use pdf::error::PdfError;
 use pdf::file::File;
 use pdf::primitive::Primitive;
 
-
 fn print_primitives(primitive: &Primitive) {
     match primitive {
         Primitive::Array(arr) => {
@@ -15,21 +14,20 @@ fn print_primitives(primitive: &Primitive) {
                 print_primitives(v);
             }
             println!("Array end.");
-        },
+        }
         Primitive::String(v) => {
             // let v = v.into_string().unwrap();
             let value = v.as_str();
             match value {
                 Ok(v) => {
                     println!("String: {}", v);
-                },
+                }
                 Err(e) => {
                     println!("Err: {:?} - {:?}", e, v)
-                },
+                }
             }
-
-        },
-        _ => (),
+        }
+        _ => println!("Type: {:?}", primitive),
     }
 }
 
@@ -54,21 +52,17 @@ fn main() -> Result<(), PdfError> {
 
     if let Some(content) = &first_page.contents {
         for oper in content.operations.iter() {
-            match (oper.operator.as_str(), oper.operands.as_slice()) {
-                ("BT", _) => {}
-                ("TJ", [Primitive::String(text)]) => {
-                    // "Show text" - the operation that actually contains the
-                    // text to be displayed.
-                    println!("{:?}", text.as_str().ok());
-                }
-                ("TJ", _) => {
+            match oper.operator.as_str() {
+                "TJ" => {
                     for v in &oper.operands {
                         print_primitives(v);
                     }
                     // let operands: Vec<String> = (&oper.operands).into_iter().map(|p| p.try_into()).collect();
                     // println!("{:?} - {:?}", oper.operator.as_str(), operands)
                 }
-                _ => continue,
+                v => {
+                    println!("Operator: {}", v)
+                }
             }
         }
     }
