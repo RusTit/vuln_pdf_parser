@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 pdf = "0.7.2"
+lopdf = "0.27.0"

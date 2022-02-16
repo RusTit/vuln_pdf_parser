@@ -1,5 +1,7 @@
 extern crate pdf;
+extern crate lopdf;
 
+use lopdf::{Document,Dictionary,Object};
 use std::time::SystemTime;
 
 use pdf::error::PdfError;
@@ -34,8 +36,40 @@ fn print_primitives(primitive: &Primitive) {
     }
 }
 
+fn get_catalog(doc: &Document) -> &Dictionary {
+    match doc.trailer.get(b"Root").unwrap() {
+        &Object::Reference(ref id) => {
+            match doc.get_object(*id) {
+                Ok(&Object::Dictionary(ref catalog)) => { return catalog; }
+                _ => {}
+            }
+        }
+        _ => {}
+    }
+    panic!();
+}
+
+fn get_pages(doc: &Document) -> &Dictionary {
+    let catalog = get_catalog(doc);
+    match catalog.get(b"Pages").unwrap() {
+        &Object::Reference(ref id) => {
+            match doc.get_object(*id) {
+                Ok(&Object::Dictionary(ref pages)) => { return pages; }
+                other => {println!("pages: {:?}", other)}
+            }
+        }
+        other => { println!("pages: {:?}", other)}
+    }
+    println!("catalog {:?}", catalog);
+    panic!();
+}
+
 fn main() -> Result<(), PdfError> {
     let now = SystemTime::now();
+
+    let doc = Document::load("./VULN-20220209.12.pdf").unwrap();
+    let pages = get_pages(&doc);
+    println!("{:?}", &doc);
 
     let file = File::<Vec<u8>>::open("./VULN-20220209.12.pdf").unwrap();
 
