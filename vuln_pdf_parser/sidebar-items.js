@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["convert_pdf_into_txt",""],["get_pdf_files_in_directory",""],["parse_txt",""],["process_pdf_files",""],["save_report",""]],"struct":[["Vuln",""]]});

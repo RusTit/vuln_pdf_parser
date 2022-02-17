@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["pdf_extract"] = [{"text":"impl&lt;W:&nbsp;<a class=\"trait\" href=\"https://doc.rust-lang.org/1.58.1/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.58.1/core/fmt/trait.Write.html\" title=\"trait core::fmt::Write\">Write</a> for <a class=\"struct\" href=\"pdf_extract/struct.WriteAdapter.html\" title=\"struct pdf_extract::WriteAdapter\">WriteAdapter</a>&lt;W&gt;","synthetic":false,"types":["pdf_extract::WriteAdapter"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

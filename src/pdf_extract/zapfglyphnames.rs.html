@@ -1,0 +1,424 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;home&#x2F;runner&#x2F;.cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;pdf-extract-0.6.3&#x2F;src&#x2F;zapfglyphnames.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>zapfglyphnames.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../pdf_extract/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">zapfdigbats_names_to_unicode</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">names</span> <span class="op">=</span> [
+        (<span class="string">&quot;a1&quot;</span>, <span class="number">0x2701</span>),
+        (<span class="string">&quot;a10&quot;</span>, <span class="number">0x2721</span>),
+        (<span class="string">&quot;a100&quot;</span>, <span class="number">0x275e</span>),
+        (<span class="string">&quot;a101&quot;</span>, <span class="number">0x2761</span>),
+        (<span class="string">&quot;a102&quot;</span>, <span class="number">0x2762</span>),
+        (<span class="string">&quot;a103&quot;</span>, <span class="number">0x2763</span>),
+        (<span class="string">&quot;a104&quot;</span>, <span class="number">0x2764</span>),
+        (<span class="string">&quot;a105&quot;</span>, <span class="number">0x2710</span>),
+        (<span class="string">&quot;a106&quot;</span>, <span class="number">0x2765</span>),
+        (<span class="string">&quot;a107&quot;</span>, <span class="number">0x2766</span>),
+        (<span class="string">&quot;a108&quot;</span>, <span class="number">0x2767</span>),
+        (<span class="string">&quot;a109&quot;</span>, <span class="number">0x2660</span>),
+        (<span class="string">&quot;a11&quot;</span>, <span class="number">0x261b</span>),
+        (<span class="string">&quot;a110&quot;</span>, <span class="number">0x2665</span>),
+        (<span class="string">&quot;a111&quot;</span>, <span class="number">0x2666</span>),
+        (<span class="string">&quot;a112&quot;</span>, <span class="number">0x2663</span>),
+        (<span class="string">&quot;a117&quot;</span>, <span class="number">0x2709</span>),
+        (<span class="string">&quot;a118&quot;</span>, <span class="number">0x2708</span>),
+        (<span class="string">&quot;a119&quot;</span>, <span class="number">0x2707</span>),
+        (<span class="string">&quot;a12&quot;</span>, <span class="number">0x261e</span>),
+        (<span class="string">&quot;a120&quot;</span>, <span class="number">0x2460</span>),
+        (<span class="string">&quot;a121&quot;</span>, <span class="number">0x2461</span>),
+        (<span class="string">&quot;a122&quot;</span>, <span class="number">0x2462</span>),
+        (<span class="string">&quot;a123&quot;</span>, <span class="number">0x2463</span>),
+        (<span class="string">&quot;a124&quot;</span>, <span class="number">0x2464</span>),
+        (<span class="string">&quot;a125&quot;</span>, <span class="number">0x2465</span>),
+        (<span class="string">&quot;a126&quot;</span>, <span class="number">0x2466</span>),
+        (<span class="string">&quot;a127&quot;</span>, <span class="number">0x2467</span>),
+        (<span class="string">&quot;a128&quot;</span>, <span class="number">0x2468</span>),
+        (<span class="string">&quot;a129&quot;</span>, <span class="number">0x2469</span>),
+        (<span class="string">&quot;a13&quot;</span>, <span class="number">0x270c</span>),
+        (<span class="string">&quot;a130&quot;</span>, <span class="number">0x2776</span>),
+        (<span class="string">&quot;a131&quot;</span>, <span class="number">0x2777</span>),
+        (<span class="string">&quot;a132&quot;</span>, <span class="number">0x2778</span>),
+        (<span class="string">&quot;a133&quot;</span>, <span class="number">0x2779</span>),
+        (<span class="string">&quot;a134&quot;</span>, <span class="number">0x277a</span>),
+        (<span class="string">&quot;a135&quot;</span>, <span class="number">0x277b</span>),
+        (<span class="string">&quot;a136&quot;</span>, <span class="number">0x277c</span>),
+        (<span class="string">&quot;a137&quot;</span>, <span class="number">0x277d</span>),
+        (<span class="string">&quot;a138&quot;</span>, <span class="number">0x277e</span>),
+        (<span class="string">&quot;a139&quot;</span>, <span class="number">0x277f</span>),
+        (<span class="string">&quot;a14&quot;</span>, <span class="number">0x270d</span>),
+        (<span class="string">&quot;a140&quot;</span>, <span class="number">0x2780</span>),
+        (<span class="string">&quot;a141&quot;</span>, <span class="number">0x2781</span>),
+        (<span class="string">&quot;a142&quot;</span>, <span class="number">0x2782</span>),
+        (<span class="string">&quot;a143&quot;</span>, <span class="number">0x2783</span>),
+        (<span class="string">&quot;a144&quot;</span>, <span class="number">0x2784</span>),
+        (<span class="string">&quot;a145&quot;</span>, <span class="number">0x2785</span>),
+        (<span class="string">&quot;a146&quot;</span>, <span class="number">0x2786</span>),
+        (<span class="string">&quot;a147&quot;</span>, <span class="number">0x2787</span>),
+        (<span class="string">&quot;a148&quot;</span>, <span class="number">0x2788</span>),
+        (<span class="string">&quot;a149&quot;</span>, <span class="number">0x2789</span>),
+        (<span class="string">&quot;a15&quot;</span>, <span class="number">0x270e</span>),
+        (<span class="string">&quot;a150&quot;</span>, <span class="number">0x278a</span>),
+        (<span class="string">&quot;a151&quot;</span>, <span class="number">0x278b</span>),
+        (<span class="string">&quot;a152&quot;</span>, <span class="number">0x278c</span>),
+        (<span class="string">&quot;a153&quot;</span>, <span class="number">0x278d</span>),
+        (<span class="string">&quot;a154&quot;</span>, <span class="number">0x278e</span>),
+        (<span class="string">&quot;a155&quot;</span>, <span class="number">0x278f</span>),
+        (<span class="string">&quot;a156&quot;</span>, <span class="number">0x2790</span>),
+        (<span class="string">&quot;a157&quot;</span>, <span class="number">0x2791</span>),
+        (<span class="string">&quot;a158&quot;</span>, <span class="number">0x2792</span>),
+        (<span class="string">&quot;a159&quot;</span>, <span class="number">0x2793</span>),
+        (<span class="string">&quot;a16&quot;</span>, <span class="number">0x270f</span>),
+        (<span class="string">&quot;a160&quot;</span>, <span class="number">0x2794</span>),
+        (<span class="string">&quot;a161&quot;</span>, <span class="number">0x2192</span>),
+        (<span class="string">&quot;a162&quot;</span>, <span class="number">0x27a3</span>),
+        (<span class="string">&quot;a163&quot;</span>, <span class="number">0x2194</span>),
+        (<span class="string">&quot;a164&quot;</span>, <span class="number">0x2195</span>),
+        (<span class="string">&quot;a165&quot;</span>, <span class="number">0x2799</span>),
+        (<span class="string">&quot;a166&quot;</span>, <span class="number">0x279b</span>),
+        (<span class="string">&quot;a167&quot;</span>, <span class="number">0x279c</span>),
+        (<span class="string">&quot;a168&quot;</span>, <span class="number">0x279d</span>),
+        (<span class="string">&quot;a169&quot;</span>, <span class="number">0x279e</span>),
+        (<span class="string">&quot;a17&quot;</span>, <span class="number">0x2711</span>),
+        (<span class="string">&quot;a170&quot;</span>, <span class="number">0x279f</span>),
+        (<span class="string">&quot;a171&quot;</span>, <span class="number">0x27a0</span>),
+        (<span class="string">&quot;a172&quot;</span>, <span class="number">0x27a1</span>),
+        (<span class="string">&quot;a173&quot;</span>, <span class="number">0x27a2</span>),
+        (<span class="string">&quot;a174&quot;</span>, <span class="number">0x27a4</span>),
+        (<span class="string">&quot;a175&quot;</span>, <span class="number">0x27a5</span>),
+        (<span class="string">&quot;a176&quot;</span>, <span class="number">0x27a6</span>),
+        (<span class="string">&quot;a177&quot;</span>, <span class="number">0x27a7</span>),
+        (<span class="string">&quot;a178&quot;</span>, <span class="number">0x27a8</span>),
+        (<span class="string">&quot;a179&quot;</span>, <span class="number">0x27a9</span>),
+        (<span class="string">&quot;a18&quot;</span>, <span class="number">0x2712</span>),
+        (<span class="string">&quot;a180&quot;</span>, <span class="number">0x27ab</span>),
+        (<span class="string">&quot;a181&quot;</span>, <span class="number">0x27ad</span>),
+        (<span class="string">&quot;a182&quot;</span>, <span class="number">0x27af</span>),
+        (<span class="string">&quot;a183&quot;</span>, <span class="number">0x27b2</span>),
+        (<span class="string">&quot;a184&quot;</span>, <span class="number">0x27b3</span>),
+        (<span class="string">&quot;a185&quot;</span>, <span class="number">0x27b5</span>),
+        (<span class="string">&quot;a186&quot;</span>, <span class="number">0x27b8</span>),
+        (<span class="string">&quot;a187&quot;</span>, <span class="number">0x27ba</span>),
+        (<span class="string">&quot;a188&quot;</span>, <span class="number">0x27bb</span>),
+        (<span class="string">&quot;a189&quot;</span>, <span class="number">0x27bc</span>),
+        (<span class="string">&quot;a19&quot;</span>, <span class="number">0x2713</span>),
+        (<span class="string">&quot;a190&quot;</span>, <span class="number">0x27bd</span>),
+        (<span class="string">&quot;a191&quot;</span>, <span class="number">0x27be</span>),
+        (<span class="string">&quot;a192&quot;</span>, <span class="number">0x279a</span>),
+        (<span class="string">&quot;a193&quot;</span>, <span class="number">0x27aa</span>),
+        (<span class="string">&quot;a194&quot;</span>, <span class="number">0x27b6</span>),
+        (<span class="string">&quot;a195&quot;</span>, <span class="number">0x27b9</span>),
+        (<span class="string">&quot;a196&quot;</span>, <span class="number">0x2798</span>),
+        (<span class="string">&quot;a197&quot;</span>, <span class="number">0x27b4</span>),
+        (<span class="string">&quot;a198&quot;</span>, <span class="number">0x27b7</span>),
+        (<span class="string">&quot;a199&quot;</span>, <span class="number">0x27ac</span>),
+        (<span class="string">&quot;a2&quot;</span>, <span class="number">0x2702</span>),
+        (<span class="string">&quot;a20&quot;</span>, <span class="number">0x2714</span>),
+        (<span class="string">&quot;a200&quot;</span>, <span class="number">0x27ae</span>),
+        (<span class="string">&quot;a201&quot;</span>, <span class="number">0x27b1</span>),
+        (<span class="string">&quot;a202&quot;</span>, <span class="number">0x2703</span>),
+        (<span class="string">&quot;a203&quot;</span>, <span class="number">0x2750</span>),
+        (<span class="string">&quot;a204&quot;</span>, <span class="number">0x2752</span>),
+        (<span class="string">&quot;a205&quot;</span>, <span class="number">0x276e</span>),
+        (<span class="string">&quot;a206&quot;</span>, <span class="number">0x2770</span>),
+        (<span class="string">&quot;a21&quot;</span>, <span class="number">0x2715</span>),
+        (<span class="string">&quot;a22&quot;</span>, <span class="number">0x2716</span>),
+        (<span class="string">&quot;a23&quot;</span>, <span class="number">0x2717</span>),
+        (<span class="string">&quot;a24&quot;</span>, <span class="number">0x2718</span>),
+        (<span class="string">&quot;a25&quot;</span>, <span class="number">0x2719</span>),
+        (<span class="string">&quot;a26&quot;</span>, <span class="number">0x271a</span>),
+        (<span class="string">&quot;a27&quot;</span>, <span class="number">0x271b</span>),
+        (<span class="string">&quot;a28&quot;</span>, <span class="number">0x271c</span>),
+        (<span class="string">&quot;a29&quot;</span>, <span class="number">0x2722</span>),
+        (<span class="string">&quot;a3&quot;</span>, <span class="number">0x2704</span>),
+        (<span class="string">&quot;a30&quot;</span>, <span class="number">0x2723</span>),
+        (<span class="string">&quot;a31&quot;</span>, <span class="number">0x2724</span>),
+        (<span class="string">&quot;a32&quot;</span>, <span class="number">0x2725</span>),
+        (<span class="string">&quot;a33&quot;</span>, <span class="number">0x2726</span>),
+        (<span class="string">&quot;a34&quot;</span>, <span class="number">0x2727</span>),
+        (<span class="string">&quot;a35&quot;</span>, <span class="number">0x2605</span>),
+        (<span class="string">&quot;a36&quot;</span>, <span class="number">0x2729</span>),
+        (<span class="string">&quot;a37&quot;</span>, <span class="number">0x272a</span>),
+        (<span class="string">&quot;a38&quot;</span>, <span class="number">0x272b</span>),
+        (<span class="string">&quot;a39&quot;</span>, <span class="number">0x272c</span>),
+        (<span class="string">&quot;a4&quot;</span>, <span class="number">0x260e</span>),
+        (<span class="string">&quot;a40&quot;</span>, <span class="number">0x272d</span>),
+        (<span class="string">&quot;a41&quot;</span>, <span class="number">0x272e</span>),
+        (<span class="string">&quot;a42&quot;</span>, <span class="number">0x272f</span>),
+        (<span class="string">&quot;a43&quot;</span>, <span class="number">0x2730</span>),
+        (<span class="string">&quot;a44&quot;</span>, <span class="number">0x2731</span>),
+        (<span class="string">&quot;a45&quot;</span>, <span class="number">0x2732</span>),
+        (<span class="string">&quot;a46&quot;</span>, <span class="number">0x2733</span>),
+        (<span class="string">&quot;a47&quot;</span>, <span class="number">0x2734</span>),
+        (<span class="string">&quot;a48&quot;</span>, <span class="number">0x2735</span>),
+        (<span class="string">&quot;a49&quot;</span>, <span class="number">0x2736</span>),
+        (<span class="string">&quot;a5&quot;</span>, <span class="number">0x2706</span>),
+        (<span class="string">&quot;a50&quot;</span>, <span class="number">0x2737</span>),
+        (<span class="string">&quot;a51&quot;</span>, <span class="number">0x2738</span>),
+        (<span class="string">&quot;a52&quot;</span>, <span class="number">0x2739</span>),
+        (<span class="string">&quot;a53&quot;</span>, <span class="number">0x273a</span>),
+        (<span class="string">&quot;a54&quot;</span>, <span class="number">0x273b</span>),
+        (<span class="string">&quot;a55&quot;</span>, <span class="number">0x273c</span>),
+        (<span class="string">&quot;a56&quot;</span>, <span class="number">0x273d</span>),
+        (<span class="string">&quot;a57&quot;</span>, <span class="number">0x273e</span>),
+        (<span class="string">&quot;a58&quot;</span>, <span class="number">0x273f</span>),
+        (<span class="string">&quot;a59&quot;</span>, <span class="number">0x2740</span>),
+        (<span class="string">&quot;a6&quot;</span>, <span class="number">0x271d</span>),
+        (<span class="string">&quot;a60&quot;</span>, <span class="number">0x2741</span>),
+        (<span class="string">&quot;a61&quot;</span>, <span class="number">0x2742</span>),
+        (<span class="string">&quot;a62&quot;</span>, <span class="number">0x2743</span>),
+        (<span class="string">&quot;a63&quot;</span>, <span class="number">0x2744</span>),
+        (<span class="string">&quot;a64&quot;</span>, <span class="number">0x2745</span>),
+        (<span class="string">&quot;a65&quot;</span>, <span class="number">0x2746</span>),
+        (<span class="string">&quot;a66&quot;</span>, <span class="number">0x2747</span>),
+        (<span class="string">&quot;a67&quot;</span>, <span class="number">0x2748</span>),
+        (<span class="string">&quot;a68&quot;</span>, <span class="number">0x2749</span>),
+        (<span class="string">&quot;a69&quot;</span>, <span class="number">0x274a</span>),
+        (<span class="string">&quot;a7&quot;</span>, <span class="number">0x271e</span>),
+        (<span class="string">&quot;a70&quot;</span>, <span class="number">0x274b</span>),
+        (<span class="string">&quot;a71&quot;</span>, <span class="number">0x25cf</span>),
+        (<span class="string">&quot;a72&quot;</span>, <span class="number">0x274d</span>),
+        (<span class="string">&quot;a73&quot;</span>, <span class="number">0x25a0</span>),
+        (<span class="string">&quot;a74&quot;</span>, <span class="number">0x274f</span>),
+        (<span class="string">&quot;a75&quot;</span>, <span class="number">0x2751</span>),
+        (<span class="string">&quot;a76&quot;</span>, <span class="number">0x25b2</span>),
+        (<span class="string">&quot;a77&quot;</span>, <span class="number">0x25bc</span>),
+        (<span class="string">&quot;a78&quot;</span>, <span class="number">0x25c6</span>),
+        (<span class="string">&quot;a79&quot;</span>, <span class="number">0x2756</span>),
+        (<span class="string">&quot;a8&quot;</span>, <span class="number">0x271f</span>),
+        (<span class="string">&quot;a81&quot;</span>, <span class="number">0x25d7</span>),
+        (<span class="string">&quot;a82&quot;</span>, <span class="number">0x2758</span>),
+        (<span class="string">&quot;a83&quot;</span>, <span class="number">0x2759</span>),
+        (<span class="string">&quot;a84&quot;</span>, <span class="number">0x275a</span>),
+        (<span class="string">&quot;a85&quot;</span>, <span class="number">0x276f</span>),
+        (<span class="string">&quot;a86&quot;</span>, <span class="number">0x2771</span>),
+        (<span class="string">&quot;a87&quot;</span>, <span class="number">0x2772</span>),
+        (<span class="string">&quot;a88&quot;</span>, <span class="number">0x2773</span>),
+        (<span class="string">&quot;a89&quot;</span>, <span class="number">0x2768</span>),
+        (<span class="string">&quot;a9&quot;</span>, <span class="number">0x2720</span>),
+
+        (<span class="string">&quot;a90&quot;</span>, <span class="number">0x2769</span>),
+        (<span class="string">&quot;a91&quot;</span>, <span class="number">0x276c</span>),
+        (<span class="string">&quot;a92&quot;</span>, <span class="number">0x276d</span>),
+        (<span class="string">&quot;a93&quot;</span>, <span class="number">0x276a</span>),
+        (<span class="string">&quot;a94&quot;</span>, <span class="number">0x276b</span>),
+        (<span class="string">&quot;a95&quot;</span>, <span class="number">0x2774</span>),
+        (<span class="string">&quot;a96&quot;</span>, <span class="number">0x2775</span>),
+        (<span class="string">&quot;a97&quot;</span>, <span class="number">0x275b</span>),
+        (<span class="string">&quot;a98&quot;</span>, <span class="number">0x275c</span>),
+        (<span class="string">&quot;a99&quot;</span>, <span class="number">0x275d</span>),
+        (<span class="string">&quot;space&quot;</span>, <span class="number">0x0020</span>),
+    ];
+
+    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">names</span>.<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>, <span class="op">|</span><span class="kw-2">&amp;</span>(<span class="ident">name</span>,<span class="ident">_code</span>)<span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">name</span>);
+    <span class="ident">result</span>.<span class="ident">ok</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">indx</span><span class="op">|</span> <span class="ident">names</span>[<span class="ident">indx</span>].<span class="number">1</span>)
+}
+</code></pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pdf_extract" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
+</body></html>
