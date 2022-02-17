@@ -2,3 +2,5 @@
 *.pdf
 /.vscode
 *.txt
+*.asc
+*.zip
