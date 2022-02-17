@@ -9,7 +9,7 @@ fn main() {
     SimpleLogger::new().init().unwrap();
     log::info!("App start");
     let now = SystemTime::now();
-    let files = get_pdf_files_in_directory();
+    let files = get_pdf_files_in_directory(None);
     process_pdf_files(&files);
 
     if let Ok(elapsed) = now.elapsed() {

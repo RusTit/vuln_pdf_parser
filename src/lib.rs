@@ -8,9 +8,21 @@ use std::fs::{create_dir_all, read_to_string, rename, OpenOptions};
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
-pub fn get_pdf_files_in_directory() -> Vec<PathBuf> {
-    let files = glob("./*.pdf").expect("Failed to read glob pattern");
-    files.map(|f| f.unwrap()).collect()
+const PDF_PATTERN: &str = "*.pdf";
+pub fn get_pdf_files_in_directory(directory: Option<String>) -> Vec<PathBuf> {
+    let directory_to_search = match directory {
+        Some(d) => d,
+        None => String::from("."),
+    };
+    let mut pattern = PathBuf::new();
+    pattern.push(directory_to_search);
+    pattern.push(PDF_PATTERN);
+    let pattern = pattern.display().to_string();
+    log::debug!("Pattern to search pdf: {}", pattern);
+    let files = glob(&pattern).expect("Failed to read glob pattern");
+    let pdf_files: Vec<PathBuf> = files.map(|f| f.unwrap()).collect();
+    log::debug!("Found {} pdf files in current directory.", pdf_files.len());
+    return pdf_files;
 }
 
 #[derive(Debug, Default)]
@@ -21,8 +33,16 @@ pub struct Vuln {
     products: Option<String>,
 }
 
+const DESCRIPTION_BLOCK: &str = "Наличие обновления";
+const CATEGORY_BLOCK: &str = "Категория уязвимого продукта";
+const PRODUCT_BLOCK: &str = "Уязвимый продукт";
 pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
     let file_content = read_to_string(&output_file).unwrap();
+    log::debug!(
+        "File {} has {} content length",
+        output_file.to_path_buf().display(),
+        file_content.len()
+    );
     let mut lines = file_content.lines();
     let mut result = Vuln {
         file_name: String::from(output_file.file_name().unwrap().to_str().unwrap()),
@@ -31,7 +51,7 @@ pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
     while let Some(line) = lines.next() {
         let line = line.trim();
 
-        if line.starts_with("Наличие обновления") {
+        if line.starts_with(DESCRIPTION_BLOCK) {
             while let Some(line) = lines.next() {
                 let line = line.trim();
                 if !line.is_empty() {
@@ -39,13 +59,9 @@ pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
                     break;
                 }
             }
-        } else if line.starts_with("Категория уязвимого продукта") {
+        } else if line.starts_with(CATEGORY_BLOCK) {
             let mut buff = String::new();
-            buff.push_str(
-                line.strip_prefix("Категория уязвимого продукта")
-                    .unwrap()
-                    .trim(),
-            );
+            buff.push_str(line.strip_prefix(CATEGORY_BLOCK).unwrap().trim());
             while let Some(line) = lines.next() {
                 let line = line.trim();
                 if line.is_empty() {
@@ -55,9 +71,9 @@ pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
                 buff.push_str(line);
             }
             result.category = Some(buff);
-        } else if line.starts_with("Уязвимый продукт") {
+        } else if line.starts_with(PRODUCT_BLOCK) {
             let mut buff = String::new();
-            buff.push_str(line.strip_prefix("Уязвимый продукт").unwrap().trim());
+            buff.push_str(line.strip_prefix(PRODUCT_BLOCK).unwrap().trim());
             while let Some(line) = lines.next() {
                 let line = line.trim();
                 if line.is_empty() {
@@ -89,6 +105,7 @@ pub fn convert_pdf_into_txt(output_file_path: &Path, path: &Path) -> Result<(), 
 
 pub fn save_report(v: &Vuln, folder_path: &str) {
     let mut report_file_path = PathBuf::new();
+    log::debug!("Saving report result into folder: {}", folder_path);
     report_file_path.push(folder_path);
     report_file_path.push("report.txt");
     let mut file = OpenOptions::new()
@@ -113,18 +130,19 @@ pub fn save_report(v: &Vuln, folder_path: &str) {
 pub fn process_pdf_files(files: &[PathBuf]) {
     let re = Regex::new(r"-(\d+)").unwrap();
     for pdf_file in files {
+        log::debug!("Processing {} file", pdf_file.display());
         let path = Path::new(pdf_file);
         let filename = path.file_name().expect("expected a filename");
         let captures = re.captures(filename.to_str().unwrap()).unwrap();
         if captures.len() == 1 {
-            // pdf has unknown format
+            log::warn!("PDF file name ({}) has invalid format", pdf_file.display());
             continue;
         }
         let folder_name = &captures[1];
         let folder_path = format!("./{}", folder_name);
         let result = create_dir_all(&folder_path);
-        if let Err(_e) = result {
-            // unable to create output
+        if let Err(e) = result {
+            log::warn!("Unable to create output folder: {} {}", folder_name, e);
             continue;
         }
         let mut output_file_path = PathBuf::new();
@@ -133,8 +151,8 @@ pub fn process_pdf_files(files: &[PathBuf]) {
         output_file_path.set_extension(&EXTENSION);
 
         let result = convert_pdf_into_txt(&output_file_path, path);
-        if let Err(_e) = result {
-            // unable to convert pdf into txt
+        if let Err(e) = result {
+            log::warn!("Unable to convert pdf into txt: {}", e);
             continue;
         }
         if let Some(v) = parse_txt(&output_file_path) {
@@ -143,8 +161,8 @@ pub fn process_pdf_files(files: &[PathBuf]) {
             pdf_file_result_path.push(&folder_path);
             pdf_file_result_path.push(&filename);
             let result = rename(&pdf_file, &pdf_file_result_path);
-            if let Err(_e) = result {
-                // unable to move file
+            if let Err(e) = result {
+                log::warn!("Unable to move file: {}", e);
                 continue;
             }
         }
