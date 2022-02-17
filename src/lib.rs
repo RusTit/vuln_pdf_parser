@@ -22,7 +22,7 @@ pub fn get_pdf_files_in_directory(directory: Option<String>) -> Vec<PathBuf> {
     let files = glob(&pattern).expect("Failed to read glob pattern");
     let pdf_files: Vec<PathBuf> = files.map(|f| f.unwrap()).collect();
     log::debug!("Found {} pdf files in current directory.", pdf_files.len());
-    return pdf_files;
+    pdf_files
 }
 
 #[derive(Debug, Default)]
@@ -52,7 +52,7 @@ pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
         let line = line.trim();
 
         if line.starts_with(DESCRIPTION_BLOCK) {
-            while let Some(line) = lines.next() {
+            for line in lines.by_ref() {
                 let line = line.trim();
                 if !line.is_empty() {
                     result.description = Some(String::from(line));
@@ -62,7 +62,7 @@ pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
         } else if line.starts_with(CATEGORY_BLOCK) {
             let mut buff = String::new();
             buff.push_str(line.strip_prefix(CATEGORY_BLOCK).unwrap().trim());
-            while let Some(line) = lines.next() {
+            for line in lines.by_ref() {
                 let line = line.trim();
                 if line.is_empty() {
                     break;
@@ -74,7 +74,7 @@ pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
         } else if line.starts_with(PRODUCT_BLOCK) {
             let mut buff = String::new();
             buff.push_str(line.strip_prefix(PRODUCT_BLOCK).unwrap().trim());
-            while let Some(line) = lines.next() {
+            for line in lines.by_ref() {
                 let line = line.trim();
                 if line.is_empty() {
                     break;
