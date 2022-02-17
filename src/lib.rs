@@ -1,12 +1,12 @@
 use glob::glob;
-use std::fmt::{Debug, write};
-use std::io::{BufWriter, Write};
-use std::fs::File;
-use std::path::{PathBuf, Path};
-use std::fs::{rename, create_dir_all, read_to_string, OpenOptions};
-use lopdf::{Document};
-use pdf_extract::{OutputDev,PlainTextOutput,output_doc, OutputError};
+use lopdf::Document;
+use pdf_extract::{output_doc, OutputDev, OutputError, PlainTextOutput};
 use regex::Regex;
+use std::fmt::Debug;
+use std::fs::File;
+use std::fs::{create_dir_all, read_to_string, rename, OpenOptions};
+use std::io::{BufWriter, Write};
+use std::path::{Path, PathBuf};
 
 pub fn get_pdf_files_in_directory() -> Vec<PathBuf> {
     let files = glob("./*.pdf").expect("Failed to read glob pattern");
@@ -18,34 +18,40 @@ pub struct Vuln {
     file_name: String,
     description: Option<String>,
     category: Option<String>,
-    products: Option<String>
+    products: Option<String>,
 }
 
-pub fn parse_txt(output_file: &PathBuf) -> Option<Vuln> {
+pub fn parse_txt(output_file: &Path) -> Option<Vuln> {
     let file_content = read_to_string(&output_file).unwrap();
     let mut lines = file_content.lines();
-    let mut result = Vuln::default();
-    result.file_name = String::from(output_file.file_name().unwrap().to_str().unwrap());
+    let mut result = Vuln {
+        file_name: String::from(output_file.file_name().unwrap().to_str().unwrap()),
+        ..Default::default()
+    };
     while let Some(line) = lines.next() {
         let line = line.trim();
 
         if line.starts_with("Наличие обновления") {
             while let Some(line) = lines.next() {
                 let line = line.trim();
-                if line.len() > 0 {
+                if !line.is_empty() {
                     result.description = Some(String::from(line));
                     break;
                 }
             }
         } else if line.starts_with("Категория уязвимого продукта") {
             let mut buff = String::new();
-            buff.push_str(line.strip_prefix("Категория уязвимого продукта").unwrap().trim());
+            buff.push_str(
+                line.strip_prefix("Категория уязвимого продукта")
+                    .unwrap()
+                    .trim(),
+            );
             while let Some(line) = lines.next() {
                 let line = line.trim();
-                if line.len() == 0 {
+                if line.is_empty() {
                     break;
                 }
-                buff.push_str(" ");
+                buff.push(' ');
                 buff.push_str(line);
             }
             result.category = Some(buff);
@@ -54,10 +60,10 @@ pub fn parse_txt(output_file: &PathBuf) -> Option<Vuln> {
             buff.push_str(line.strip_prefix("Уязвимый продукт").unwrap().trim());
             while let Some(line) = lines.next() {
                 let line = line.trim();
-                if line.len() == 0 {
+                if line.is_empty() {
                     break;
                 }
-                buff.push_str(" ");
+                buff.push(' ');
                 buff.push_str(line);
             }
             result.products = Some(buff);
@@ -71,32 +77,40 @@ pub fn parse_txt(output_file: &PathBuf) -> Option<Vuln> {
 
 const EXTENSION: &str = "txt";
 
-pub fn convert_pdf_into_txt(output_file_path: &PathBuf, path: &Path) -> Result<(), OutputError> {
-    let mut output_file = BufWriter::new(File::create(output_file_path).expect("could not create output"));
-    let mut output: Box<dyn OutputDev> = Box::new(PlainTextOutput::new(&mut output_file as &mut dyn std::io::Write));
+pub fn convert_pdf_into_txt(output_file_path: &Path, path: &Path) -> Result<(), OutputError> {
+    let mut output_file =
+        BufWriter::new(File::create(output_file_path).expect("could not create output"));
+    let mut output: Box<dyn OutputDev> = Box::new(PlainTextOutput::new(
+        &mut output_file as &mut dyn std::io::Write,
+    ));
     let doc = Document::load(&path).unwrap();
     return output_doc(&doc, output.as_mut());
 }
 
-pub fn save_report(v: &Vuln, folder_path: &String) {
+pub fn save_report(v: &Vuln, folder_path: &str) {
     let mut report_file_path = PathBuf::new();
     report_file_path.push(folder_path);
     report_file_path.push("report.txt");
     let mut file = OpenOptions::new()
-      .write(true)
-      .append(true)
-      .create(true)
-      .open(report_file_path)
-      .unwrap();
+        .write(true)
+        .append(true)
+        .create(true)
+        .open(report_file_path)
+        .unwrap();
     writeln!(file, "Filename: {}", v.file_name).unwrap();
     let stub = String::from("=======");
-    writeln!(file, "Description: {}", v.description.as_ref().unwrap_or(&stub)).unwrap();
+    writeln!(
+        file,
+        "Description: {}",
+        v.description.as_ref().unwrap_or(&stub)
+    )
+    .unwrap();
     writeln!(file, "Category: {}", v.category.as_ref().unwrap_or(&stub)).unwrap();
     writeln!(file, "Products: {}", v.products.as_ref().unwrap_or(&stub)).unwrap();
     writeln!(file).unwrap();
 }
 
-pub fn process_pdf_files(files: &Vec<PathBuf>) {
+pub fn process_pdf_files(files: &[PathBuf]) {
     let re = Regex::new(r"-(\d+)").unwrap();
     for pdf_file in files {
         let path = Path::new(pdf_file);
@@ -118,13 +132,21 @@ pub fn process_pdf_files(files: &Vec<PathBuf>) {
         output_file_path.push(&filename);
         output_file_path.set_extension(&EXTENSION);
 
-        let result = convert_pdf_into_txt(&output_file_path, &path);
+        let result = convert_pdf_into_txt(&output_file_path, path);
         if let Err(_e) = result {
             // unable to convert pdf into txt
             continue;
         }
         if let Some(v) = parse_txt(&output_file_path) {
             save_report(&v, &folder_path);
+            let mut pdf_file_result_path = PathBuf::new();
+            pdf_file_result_path.push(&folder_path);
+            pdf_file_result_path.push(&filename);
+            let result = rename(&pdf_file, &pdf_file_result_path);
+            if let Err(_e) = result {
+                // unable to move file
+                continue;
+            }
         }
     }
 }
