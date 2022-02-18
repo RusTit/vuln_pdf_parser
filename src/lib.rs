@@ -133,38 +133,42 @@ pub fn process_pdf_files(files: &[PathBuf]) {
         log::debug!("Processing {} file", pdf_file.display());
         let path = Path::new(pdf_file);
         let filename = path.file_name().expect("expected a filename");
-        let captures = re.captures(filename.to_str().unwrap()).unwrap();
-        if captures.len() == 1 {
-            log::warn!("PDF file name ({}) has invalid format", pdf_file.display());
-            continue;
-        }
-        let folder_name = &captures[1];
-        let folder_path = format!("./{}", folder_name);
-        let result = create_dir_all(&folder_path);
-        if let Err(e) = result {
-            log::warn!("Unable to create output folder: {} {}", folder_name, e);
-            continue;
-        }
-        let mut output_file_path = PathBuf::new();
-        output_file_path.push(&folder_path);
-        output_file_path.push(&filename);
-        output_file_path.set_extension(&EXTENSION);
+        let captures = re.captures(filename.to_str().unwrap());
+        if let Some(captures) = captures {
+          if captures.len() == 1 {
+              log::warn!("PDF file name ({}) has invalid format", pdf_file.display());
+              continue;
+          }
+          let folder_name = &captures[1];
+          let folder_path = format!("./{}", folder_name);
+          let result = create_dir_all(&folder_path);
+          if let Err(e) = result {
+              log::warn!("Unable to create output folder: {} {}", folder_name, e);
+              continue;
+          }
+          let mut output_file_path = PathBuf::new();
+          output_file_path.push(&folder_path);
+          output_file_path.push(&filename);
+          output_file_path.set_extension(&EXTENSION);
 
-        let result = convert_pdf_into_txt(&output_file_path, path);
-        if let Err(e) = result {
-            log::warn!("Unable to convert pdf into txt: {}", e);
-            continue;
-        }
-        if let Some(v) = parse_txt(&output_file_path) {
-            save_report(&v, &folder_path);
-            let mut pdf_file_result_path = PathBuf::new();
-            pdf_file_result_path.push(&folder_path);
-            pdf_file_result_path.push(&filename);
-            let result = rename(&pdf_file, &pdf_file_result_path);
-            if let Err(e) = result {
-                log::warn!("Unable to move file: {}", e);
-                continue;
+          let result = convert_pdf_into_txt(&output_file_path, path);
+          if let Err(e) = result {
+              log::warn!("Unable to convert pdf into txt: {}", e);
+              continue;
+          }
+          if let Some(v) = parse_txt(&output_file_path) {
+              save_report(&v, &folder_path);
+              let mut pdf_file_result_path = PathBuf::new();
+              pdf_file_result_path.push(&folder_path);
+              pdf_file_result_path.push(&filename);
+              let result = rename(&pdf_file, &pdf_file_result_path);
+              if let Err(e) = result {
+                  log::warn!("Unable to move file: {}", e);
+                  continue;
             }
+          }
+        } else {
+          log::warn!("Unable to match file: {}", pdf_file.display());
         }
     }
 }
