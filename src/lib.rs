@@ -5,7 +5,7 @@ use regex::Regex;
 use std::fmt::Debug;
 use std::fs::File;
 use std::fs::{create_dir_all, read_to_string, rename, OpenOptions};
-use std::io::{BufWriter, Write};
+use std::io::{BufWriter, Error, Write};
 use std::path::{Path, PathBuf};
 
 const PDF_PATTERN: &str = "*.pdf";
@@ -103,7 +103,7 @@ pub fn convert_pdf_into_txt(output_file_path: &Path, path: &Path) -> Result<(), 
     return output_doc(&doc, output.as_mut());
 }
 
-pub fn save_report(v: &Vuln, folder_path: &str) {
+pub fn save_report(v: &Vuln, folder_path: &str) -> Result<(), Error> {
     let mut report_file_path = PathBuf::new();
     log::debug!("Saving report result into folder: {}", folder_path);
     report_file_path.push(folder_path);
@@ -112,19 +112,18 @@ pub fn save_report(v: &Vuln, folder_path: &str) {
         .write(true)
         .append(true)
         .create(true)
-        .open(report_file_path)
-        .unwrap();
-    writeln!(file, "Filename: {}", v.file_name).unwrap();
+        .open(report_file_path)?;
+    writeln!(file, "Filename: {}", v.file_name)?;
     let stub = String::from("=======");
     writeln!(
         file,
         "Description: {}",
         v.description.as_ref().unwrap_or(&stub)
-    )
-    .unwrap();
-    writeln!(file, "Category: {}", v.category.as_ref().unwrap_or(&stub)).unwrap();
-    writeln!(file, "Products: {}", v.products.as_ref().unwrap_or(&stub)).unwrap();
-    writeln!(file).unwrap();
+    )?;
+    writeln!(file, "Category: {}", v.category.as_ref().unwrap_or(&stub))?;
+    writeln!(file, "Products: {}", v.products.as_ref().unwrap_or(&stub))?;
+    writeln!(file)?;
+    Ok(())
 }
 
 pub fn process_pdf_files(files: &[PathBuf]) {
@@ -156,15 +155,21 @@ pub fn process_pdf_files(files: &[PathBuf]) {
                 log::warn!("Unable to convert pdf into txt: {}", e);
                 continue;
             }
-            if let Some(v) = parse_txt(&output_file_path) {
-                save_report(&v, &folder_path);
-                let mut pdf_file_result_path = PathBuf::new();
-                pdf_file_result_path.push(&folder_path);
-                pdf_file_result_path.push(&filename);
-                let result = rename(&pdf_file, &pdf_file_result_path);
-                if let Err(e) = result {
-                    log::warn!("Unable to move file: {}", e);
-                    continue;
+            if let Some(v) = parse_txt(&output_file_path).take() {
+                match save_report(&v, &folder_path) {
+                    Ok(()) => {
+                        let mut pdf_file_result_path = PathBuf::new();
+                        pdf_file_result_path.push(&folder_path);
+                        pdf_file_result_path.push(&filename);
+                        let result = rename(&pdf_file, &pdf_file_result_path);
+                        if let Err(e) = result {
+                            log::warn!("Unable to move file: {}", e);
+                            continue;
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Unable to append result to report.txt: {}", e);
+                    }
                 }
             }
         } else {
